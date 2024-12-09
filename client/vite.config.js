@@ -7,6 +7,10 @@ export default defineConfig({
     proxy:{
         '/api' :{ target : "http://localhost:3000",secure:false},
         
+    },
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
     }
   },
   plugins: [react()],

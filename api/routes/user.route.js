@@ -2,4 +2,8 @@ import express from 'express';
 
 const router=express.Router();
 
-export default UserRouter;
+router.get('/',(req,res)=>{
+ console.log('not')
+})
+
+export default router;
