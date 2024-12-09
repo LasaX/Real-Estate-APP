@@ -3,12 +3,15 @@ import mongoose from 'mongoose'
 import dotenv from 'dotenv'
 import UserRouter from './routes/user.route.js';
 import authRouter from './routes/Auth.route.js'
+import cookieParser from 'cookie-parser';
+
 
 dotenv.config();
 
 const app =express()
 
 app.use(express.json())
+app.use(cookieParser())
 
 mongoose.connect(process.env.MONGO).then(()=>{
     console.log('connected to database')
