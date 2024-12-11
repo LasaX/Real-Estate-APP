@@ -1,7 +1,9 @@
 import express from 'express';
+import { deleteUser,updateUser } from '../controller/user.controller';
 
 const router=express.Router();
 
-router.post('/update/:id',updateUser)
+router.post('/update/:id',verifyToken,updateUser);
+router.delete('/delete/:id',verifyToken,deleteUser)
 
 export default router;
