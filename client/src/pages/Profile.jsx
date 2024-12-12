@@ -4,6 +4,7 @@ import {getDownloadURL, getStorage, uploadBytesResumable} from 'firebase/storage
 import app from "../firebase"
 import { deleteUserFailure, deleteUserStart, deleteUserSuccess, updateUserFailure,updateUserStart,updateUserSuccess } from "../redux/user/userSlice"
 import { useDispatch } from "react-redux"
+import {Link} from 'react-router-dom'
 
 function Profile() {
   const fileRef =useRef(null)
@@ -13,6 +14,8 @@ function Profile() {
   const [fileUploadError,setFileuploadError]=useState(false);
   const [formdata,setFormData]=useState({})
   const [updateSuccess,setUpdateSucess]=useState(false)
+  const [showListingsError,setShowListingError] = useState(false);
+  const [userListings,setUserListings]=useState([])
   const dispatch = useDispatch()
 
   useRef(()=>{
@@ -45,7 +48,7 @@ function Profile() {
   );
   }
 
-   const handleChange =(e) => {
+   const handleCheck =(e) => {
     setFormData({...formdata,[e.target.id ]: e.traget.value})
    }
 
@@ -76,7 +79,7 @@ function Profile() {
     dispatch(updateUserFailure(error.message));
 
    }
-
+  }
    const handleDeleteUser = async ()=>{
      try{
       dispatch(deleteUserStart());
@@ -93,7 +96,53 @@ function Profile() {
        dispatch(deleteUserFailure(error.message))
      }
    }
+
+   const handleSignOut =async ()=>{
+      try{
+        const res = await fetch ('/api/user/signout');
+        const data = await res.json();
+        if (data.success === false){
+          dispatch(deleteUserFailure(data.message))
+          return
+        }
+        dispatch(deleteUserSuccess(data));
+      }catch(error){
+        dispatch(deleteUserFailure(data.message));
+      }
+   }
+   const handleshowListings = async ()=>{
+    try{
+      const res = await fetch (`/api/user/listing/${currentUser._id}`);
+      const data = await res.json();
+      if(data.success === false){
+        setShowListingError(true)
+        return
+      }
+      setUserListings(data);
+    }catch (error){
+      setShowListingError(true)
+    }
+   }
    
+   const handleListingDelete = async (listingId) => {
+    try{
+      const res = await fetch(`/api/listing/delete/${listingId}`,{
+        method : 'DELETE',
+          });
+        const data = await res.json()
+        if(data.success === false){
+          console.log(data.message);
+          return;
+        }
+        setUserListings((prev) =>
+        prev.filter ((listing)=> listing._id !== listingId)
+        )
+
+    }catch(error){
+       console.log(error.message)
+    }
+   }
+  
   
    
   return (
@@ -117,15 +166,43 @@ function Profile() {
         <input type="text " placeholder="email" defaultValue={currentUser.email} id="email" className="border p-3 rounded-lg" onChange={handleCheck}/>
         <input type="password " placeholder="password" id="password" className="border p-3 rounded-lg" onChange={handleCheck} />
         <button disabled ={loading} className="bg-slate-700 text-white rounded-lg disabled:opacity-80">{loading ? 'loading..' : 'Update'}</button>
+        <Link className="bg-green-700 text-white p-3 rounded-lg uppercase text-center hover:opacity-95" to = {"/create-listing"}>Create Listing</Link>
       </form>
       <div className="flex justify-between mt-5">
         <span onClick={handleDeleteUser} className="text-red-700 cursor-pointer">Delete account</span>
-        <span className="text-red-700 cursor-pointer">Sign out</span>
+        <span onClick= {handleSignOut} className="text-red-700 cursor-pointer">Sign out</span>
       </div>
       
        <p className="text-green-700 mt-5">{updateSuccess ? 'User is updated sucessfully' : ''}</p>
-    </div>
+       <button onClick={handleshowListings} className="text-green-700 w-full">Show listings</button>
+       <p className="text-red-700 mt-5">{showListingsError ? 'Error showing listings' : ''}</p>
+
+       {userListings && userListings.length > 0 && 
+       <div className="flex flex-col gap-4">
+        <h1 className="text-center mt-7 text-2xl font-semibold"> Your Listing </h1>
+       {userListings.map((listing)=>{
+        <div key ={listing._id} className=" border rounded-lg p-3 flex justify-between items-center gap-4">
+          <Link to ={`/listing/${listing._id}`}>
+          <img src={listing.imageURLs [0]} alt="listing cover" className="h-16 w-16 object-contain" /> 
+          </Link>
+
+          <Link className="text-slate-700 font-semibold  hover:underline truncate flex-1" to = {`/listing/${listing._id}`}>
+          <p >{listing.name}</p>
+          </Link>
+          <div className="flex flex-col items-center">
+            <button onClick={()=> handleListingDelete (_id)} className="text-red-700 uppercase">Delete</button>
+            <button className="text-green-700 uppercase">Edit</button>
+          </div>
+          </div>
+        }) }
+       </div>
+      }
+      </div>
   )
 }
-}
+   
+  
+   
+
+
 export default Profile
